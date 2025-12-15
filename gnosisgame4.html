@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Salvation History: Level 3 - The Narrow Path</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Orbitron:wght@500;900&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #FFD700; 
+            --neon-blue: #00F3FF; 
+            --danger: #FF0033; 
+            --glass: rgba(10, 15, 20, 0.95); 
+        }
+        body { 
+            margin: 0; 
+            background: #050505; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: 'VT323', monospace; 
+            user-select: none; 
+        }
+        #cabinet { 
+            position: relative; 
+            width: 1100px; 
+            height: 800px; 
+            background: #000; 
+            border: 5px solid #222;
+            border-radius: 20px; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+            background: #000; 
+        }
+        
+        /* THE VOICE */
+        #voice-box {
+            position: absolute; top: 120px; left: 0; width: 100%;
+            text-align: center; pointer-events: none; z-index: 10;
+        }
+        #voice-text {
+            font-family: 'Cinzel', serif; font-size: 3.5em; color: var(--gold);
+            text-shadow: 0 0 30px var(--gold);
+            transition: opacity 0.1s;
+            animation: pulse 3s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        
+        /* PROGRESS BAR */
+        #progress-bar {
+            position: absolute; top: 30px; left: 100px; right: 100px;
+            height: 6px; background: rgba(255,255,255,0.1);
+            border: 1px solid var(--gold); border-radius: 5px; overflow: hidden;
+            z-index: 10;
+        }
+        #progress-fill {
+            height: 100%; background: linear-gradient(90deg, var(--gold), #fff);
+            width: 0%; transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 0 15px var(--gold);
+        }
+
+        /* TEMPTATION TEXT */
+        #temptation {
+            position: absolute; top: 50%; right: 40px; transform: translateY(-50%);
+            width: 200px; text-align: right;
+            font-family: 'Cinzel', serif; font-size: 1.8em; color: var(--danger);
+            text-shadow: 0 0 20px red;
+            animation: heartbeat 2s infinite;
+            pointer-events: none; z-index: 15;
+            display: none; 
+        }
+        @keyframes heartbeat {
+            0% { opacity: 0.5; transform: translateY(-50%) scale(1); }
+            10% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+            20% { opacity: 0.5; transform: translateY(-50%) scale(1); }
+            100% { opacity: 0.5; transform: translateY(-50%) scale(1); }
+        }
+
+        /* GNOSIS WARNING */
+        #gnosis-warning {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-family: 'Orbitron', sans-serif; font-size: 2em; color: var(--danger);
+            text-shadow: 0 0 30px var(--danger); opacity: 0; pointer-events: none;
+            transition: opacity 0.2s; z-index: 20;
+        }
+        #gnosis-warning.active { opacity: 1; animation: shake 0.3s infinite; }
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%); }
+            25% { transform: translate(-48%, -50%); }
+            75% { transform: translate(-52%, -50%); }
+        }
+
+        #controls-hint {
+            position: absolute; bottom: 30px; width: 100%; text-align: center;
+            color: #444; font-family: 'Orbitron', sans-serif; font-size: 14px;
+            z-index: 10;
+        }
+
+        .ui-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            background: var(--glass); z-index: 60; 
+            transition: opacity 1s; padding: 40px; box-sizing: border-box;
+        }
+        .hidden { opacity: 0; pointer-events: none; }
+        .fade-visible { opacity: 1; pointer-events: auto; }
+        
+        #white-out {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 55; opacity: 0; pointer-events: none;
+            transition: opacity 3s ease-in;
+        }
+        
+        h1 { font-family: 'Cinzel', serif; font-size: 3.5em; color: var(--gold); text-shadow: 0 0 20px var(--gold); margin-bottom: 20px; }
+        
+        .quote-container {
+            border-left: 3px solid var(--gold); padding-left: 20px; margin-bottom: 30px;
+            max-width: 800px; min-height: 100px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .quote-text { font-family: 'Cinzel', serif; color: #fff; font-size: 1.4em; font-style: italic; line-height: 1.4; }
+        
+        #mission-text { 
+            color: #ccc; font-size: 1.2em; max-width: 700px; text-align: center; line-height: 1.5; margin-bottom: 20px;
+        }
+        
+        button { 
+            margin-top: 20px; background: transparent; color: var(--gold); 
+            font-family: 'Orbitron', sans-serif; font-size: 1.5em; 
+            padding: 15px 50px; border: 2px solid var(--gold); 
+            cursor: pointer; text-transform: uppercase; 
+            box-shadow: 0 0 10px var(--gold); transition: all 0.2s;
+        }
+        button:hover { background: var(--gold); color: #000; box-shadow: 0 0 30px var(--gold); }
+    </style>
+</head>
+<body>
+
+<div id="cabinet">
+    <canvas id="gameCanvas" width="1100" height="800"></canvas>
+    
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+    <div id="voice-box"><div id="voice-text">...</div></div>
+    
+    <div id="temptation">SEE FOR YOURSELF<br><span style="font-size:0.6em; color:#fff;">(HOLD SPACE)</span></div>
+    
+    <div id="gnosis-warning">⚠ EVIL AWAKENS ⚠</div>
+    <div id="controls-hint">ARROW KEYS to Move</div>
+    <div id="white-out"></div>
+
+    <div id="screen-start" class="ui-layer">
+        <h1>THE NARROW PATH</h1>
+        <div class="quote-container">
+            <span id="intro-text" class="quote-text"></span>
+        </div>
+        
+        <div id="mission-group" class="hidden" style="transition: opacity 1s;">
+            <p id="mission-text">
+                The Greek word used for "Knowledge" here is <strong>GNOSIS</strong> (Experiential Knowledge).<br><br>
+                You already have <strong>EPISTEME</strong> (Taught Knowledge): You can see the safe path through the Voice.
+                <br><br>
+                <strong>MISSION:</strong> Navigate through the dark maze by trusting in God's wisdom and guidance.
+            </p>
+            <button onclick="startGame()">I WILL LISTEN</button>
+        </div>
+    </div>
+
+    <div id="screen-fail" class="ui-layer hidden">
+        <h1 id="fail-title" style="color: var(--danger);">FALLEN</h1>
+        <p id="fail-msg" style="font-size:1.4em; color:#ccc; text-align:center;">
+            You stepped off the narrow path.<br>
+            <span style="font-size:0.8em; color:gray">Try trusting the Voice.</span>
+        </p>
+        <button style="border-color:var(--danger); color:var(--danger);" onclick="location.reload()">TRY AGAIN (EPISTEME)</button>
+    </div>
+
+    <div id="screen-win" class="ui-layer hidden">
+        <h1 style="color: #222; text-shadow:none;">FAITH REWARDED</h1>
+        <p style="text-align: center; max-width: 700px; font-size: 1.4em; color: #444;">
+            "Blessed are those who have not seen and yet have believed."
+            <br><br>
+            Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me.
+        </p>
+        <button style="color:#222; border-color:#222;" onclick="location.reload()">PLAY AGAIN?</button>
+    </div>
+</div>
+
+<script>
+/**
+ * LEVEL 3: THE NARROW PATH (Source-Verified Directions)
+ */
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+// --- CONFIG ---
+const TILE_SIZE = 100; 
+const COLS = 11;
+const ROWS = 8;
+const INTRO_QUOTE = '"Gnosis: knowledge from personal experience, or first-hand account."';
+const MUSIC_SRC = 'The_Serpents_Maze_2025-12-14T201012.mp3';
+
+// MAP (Copied from working source)
+// 1 = Wall/Pit, 0 = Path, 2 = Start, 3 = Goal
+const LEVEL_MAP = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1], // Start at 1,1. Path East to 8,1.
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1], // Path South at 8,2
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1], // Path West from 8,3 to 1,3
+    [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1], // Path South at 1,4
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], // Path East from 1,5 to 9,5
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1], // Path South at 9,6
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1]  // Goal at 9,7
+];
+
+// GPS (Re-verified manually)
+const GPS = {
+    "1,1": "GOD SAYS: WALK EAST",
+    "2,1": "GOD SAYS: WALK EAST",
+    "3,1": "GOD SAYS: WALK EAST",
+    "4,1": "GOD SAYS: WALK EAST",
+    "5,1": "GOD SAYS: WALK EAST",
+    "6,1": "GOD SAYS: WALK EAST",
+    "7,1": "GOD SAYS: PREPARE TO TURN SOUTH", 
+    "8,1": "GOD SAYS: TURN SOUTH NOW!",       
+    
+    "8,2": "GOD SAYS: WALK SOUTH",
+    "8,3": "GOD SAYS: TURN WEST NOW!",        
+    
+    "7,3": "GOD SAYS: WALK WEST",
+    "6,3": "GOD SAYS: WALK WEST",
+    "5,3": "GOD SAYS: WALK WEST",
+    "4,3": "GOD SAYS: WALK WEST",
+    "3,3": "GOD SAYS: PREPARE TO TURN SOUTH", 
+    "2,3": "GOD SAYS: PREPARE TO TURN SOUTH",       
+    "1,3": "GOD SAYS: TURN SOUTH NOW!",       
+    
+    "1,4": "GOD SAYS: WALK SOUTH",
+    "1,5": "GOD SAYS: TURN EAST NOW!",        
+    
+    "2,5": "GOD SAYS: WALK EAST",
+    "3,5": "GOD SAYS: WALK EAST",
+    "4,5": "GOD SAYS: WALK EAST",
+    "5,5": "GOD SAYS: WALK EAST",
+    "6,5": "GOD SAYS: WALK EAST",
+    "7,5": "GOD SAYS: WALK EAST", 
+    "8,5": "GOD SAYS: PREPARE TO TURN SOUTH",       
+    "9,5": "GOD SAYS: TURN SOUTH NOW!",       
+    
+    "9,6": "GOD SAYS: THE LIGHT IS NEAR",
+    "9,7": "GOD SAYS: THE LIGHT IS NEAR"
+};
+
+// --- STATE ---
+let running = false;
+let endingSequence = false;
+let player = { x: 0, y: 0, size: 20, speed: 200, lastDir: null };
+let gnosisMode = false; 
+let gnosisTime = 0; 
+let monsters = []; 
+let particles = [];
+let keys = {};
+let currentMsg = "...";
+let progress = 0;
+
+const bgMusic = new Audio(MUSIC_SRC);
+bgMusic.loop = true;
+bgMusic.volume = 0.6; 
+
+const AudioSys = {
+    ctx: new (window.AudioContext || window.webkitAudioContext)(),
+    playTone: function(freq, type, dur, vol=0.1) {
+        if(this.ctx.state === 'suspended') this.ctx.resume();
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = type; o.frequency.value = freq;
+        g.gain.setValueAtTime(vol, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(); o.stop(this.ctx.currentTime + dur);
+    }
+};
+
+// --- INITIALIZATION ---
+function init() {
+    for(let r=0; r<ROWS; r++) {
+        for(let c=0; c<COLS; c++) {
+            if(LEVEL_MAP[r][c] === 2) {
+                player.x = c * TILE_SIZE + TILE_SIZE/2;
+                player.y = r * TILE_SIZE + TILE_SIZE/2;
+            }
+        }
+    }
+
+    for(let r=0; r<ROWS; r++) {
+        for(let c=0; c<COLS; c++) {
+            if(LEVEL_MAP[r][c] === 0) {
+                if(Math.random() > 0.6) {
+                    monsters.push({
+                        x: c*TILE_SIZE + TILE_SIZE/2,
+                        y: r*TILE_SIZE + TILE_SIZE/2,
+                        active: false,
+                        speed: 160
+                    });
+                }
+            }
+        }
+    }
+
+    window.addEventListener('keydown', e => {
+        keys[e.code] = true;
+        if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+    });
+    window.addEventListener('keyup', e => keys[e.code] = false);
+
+    typeWriter(INTRO_QUOTE, 'intro-text', 40);
+    requestAnimationFrame(loop);
+}
+
+function typeWriter(text, elementId, speed) {
+    const el = document.getElementById(elementId);
+    el.innerHTML = "";
+    let i = 0;
+    function type() {
+        if (i < text.length) {
+            el.innerHTML += text.charAt(i);
+            if(i % 3 === 0) AudioSys.playTone(800, 'sine', 0.05, 0.02);
+            i++;
+            setTimeout(type, speed);
+        } else {
+            setTimeout(() => {
+                document.getElementById('mission-group').classList.remove('hidden');
+                document.getElementById('mission-group').classList.add('fade-visible');
+            }, 500);
+        }
+    }
+    type();
+}
+
+function startGame() {
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('temptation').style.display = "block";
+    running = true;
+    AudioSys.ctx.resume();
+    bgMusic.play().catch(e => console.log("Music error:", e));
+    updateVoice();
+}
+
+// --- LOGIC ---
+
+function update(dt) {
+    if(!running || endingSequence) return;
+
+    let dx = 0; let dy = 0;
+    if(keys['ArrowUp']) dy = -1;
+    if(keys['ArrowDown']) dy = 1;
+    if(keys['ArrowLeft']) dx = -1;
+    if(keys['ArrowRight']) dx = 1;
+
+    // DISABLE DIAGONALS
+    if(dx !== 0 && dy !== 0) { dy = 0; }
+
+    // SAFETY SNAP (The Fix)
+    // Instantly aligns player to grid center when turning
+    if(dx !== 0) { 
+        if(player.lastDir !== 'x') {
+            let tileY = Math.floor(player.y / TILE_SIZE) * TILE_SIZE + TILE_SIZE/2;
+            if(Math.abs(player.y - tileY) < 55) player.y = tileY; 
+        }
+        player.lastDir = 'x';
+    }
+    else if(dy !== 0) { 
+        if(player.lastDir !== 'y') {
+            let tileX = Math.floor(player.x / TILE_SIZE) * TILE_SIZE + TILE_SIZE/2;
+            if(Math.abs(player.x - tileX) < 55) player.x = tileX; 
+        }
+        player.lastDir = 'y';
+    }
+
+    let nextX = player.x + dx * player.speed * dt;
+    let nextY = player.y + dy * player.speed * dt;
+
+    if(checkDeath(nextX, nextY)) {
+        die('pit'); 
+        return;
+    } else {
+        player.x = nextX;
+        player.y = nextY;
+    }
+
+    if((dx !== 0 || dy !== 0) && Math.random() > 0.7) {
+        particles.push({
+            x: player.x, y: player.y,
+            life: 0.5, maxLife: 0.5,
+            size: 5, color: gnosisMode ? '#ff0033' : '#00F3FF'
+        });
+    }
+
+    gnosisMode = keys['Space'];
+    const warningEl = document.getElementById('gnosis-warning');
+    
+    if(gnosisMode) {
+        gnosisTime += dt;
+        warningEl.classList.add('active');
+        monsters.forEach(m => {
+            m.active = true;
+            let speedMod = 1 + (gnosisTime * 0.2);
+            let angle = Math.atan2(player.y - m.y, player.x - m.x);
+            m.x += Math.cos(angle) * m.speed * speedMod * dt;
+            m.y += Math.sin(angle) * m.speed * speedMod * dt;
+            
+            if(dist(player.x, player.y, m.x, m.y) < 20) {
+                die('monster'); 
+            }
+        });
+    } else {
+        gnosisTime = Math.max(0, gnosisTime - dt * 2);
+        warningEl.classList.remove('active');
+    }
+
+    particles = particles.filter(p => {
+        p.life -= dt;
+        return p.life > 0;
+    });
+
+    updateVoice();
+
+    let c = Math.floor(player.x / TILE_SIZE);
+    let r = Math.floor(player.y / TILE_SIZE);
+    if(LEVEL_MAP[r][c] === 3 && !endingSequence) {
+        triggerWinSequence();
+    }
+}
+
+function updateVoice() {
+    let c = Math.floor(player.x / TILE_SIZE);
+    let r = Math.floor(player.y / TILE_SIZE);
+    let key = `${c},${r}`;
+    
+    let activeMsg = GPS[key];
+    if(!activeMsg) activeMsg = currentMsg;
+
+    if(activeMsg !== currentMsg) {
+        currentMsg = activeMsg;
+        const voiceEl = document.getElementById('voice-text');
+        voiceEl.innerText = currentMsg;
+        voiceEl.style.opacity = 0;
+        setTimeout(()=> voiceEl.style.opacity = 1, 50);
+        AudioSys.playTone(440, 'sine', 0.5); 
+        
+        progress += 3;
+        if(progress > 100) progress = 100;
+        document.getElementById('progress-fill').style.width = progress + "%";
+    }
+}
+
+function checkDeath(x, y) {
+    // Single Pixel Hitbox Center Check
+    return isPit(x, y);
+}
+
+function isPit(x, y) {
+    let c = Math.floor(x / TILE_SIZE);
+    let r = Math.floor(y / TILE_SIZE);
+    if(c < 0 || c >= COLS || r < 0 || r >= ROWS) return true; 
+    return LEVEL_MAP[r][c] === 1;
+}
+
+function die(reason) {
+    running = false;
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+    
+    const title = document.getElementById('fail-title');
+    const msg = document.getElementById('fail-msg');
+    
+    if(reason === 'monster') {
+        title.innerText = "GNOSIS ACQUIRED";
+        msg.innerHTML = "You sought to see the evil for yourself...<br>and it consumed you.";
+    } else {
+        title.innerText = "FALLEN";
+        msg.innerHTML = "You stepped off the narrow path.<br><span style='font-size:0.8em; color:gray'>Try trusting the Voice.</span>";
+    }
+
+    document.getElementById('screen-fail').classList.remove('hidden');
+    document.getElementById('screen-fail').classList.add('fade-visible');
+    AudioSys.playTone(100, 'sawtooth', 0.5);
+}
+
+function triggerWinSequence() {
+    endingSequence = true;
+    bgMusic.pause();
+    AudioSys.playTone(440, 'sine', 2.0); 
+    AudioSys.playTone(554, 'sine', 2.0);
+    AudioSys.playTone(659, 'sine', 2.0);
+    document.getElementById('white-out').style.opacity = 1;
+    setTimeout(() => {
+        document.getElementById('screen-win').classList.remove('hidden');
+        document.getElementById('screen-win').classList.add('fade-visible');
+        running = false;
+    }, 2500);
+}
+
+function dist(x1,y1,x2,y2) { return Math.sqrt((x1-x2)**2+(y1-y2)**2); }
+
+// --- RENDERING ---
+
+function draw() {
+    if(endingSequence) return;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+
+    if(gnosisMode) {
+        const gradient = ctx.createRadialGradient(player.x, player.y, 100, player.x, player.y, 500);
+        gradient.addColorStop(0, 'rgba(0,0,0,0)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0.9)');
+
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                if(LEVEL_MAP[r][c] === 1) {
+                    ctx.fillStyle = '#100';
+                    ctx.fillRect(c*TILE_SIZE, r*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    ctx.strokeStyle = '#500';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(c*TILE_SIZE, r*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    ctx.beginPath(); ctx.moveTo(c*TILE_SIZE, r*TILE_SIZE); ctx.lineTo(c*TILE_SIZE+TILE_SIZE, r*TILE_SIZE+TILE_SIZE); ctx.stroke();
+                }
+            }
+        }
+        
+        monsters.forEach(m => {
+            ctx.shadowBlur = 30; ctx.shadowColor = 'red';
+            ctx.fillStyle = 'red';
+            ctx.beginPath(); ctx.arc(m.x, m.y, 15, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0; ctx.fillStyle = 'yellow';
+            ctx.beginPath(); ctx.arc(m.x-5, m.y-5, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(m.x+5, m.y-5, 3, 0, Math.PI*2); ctx.fill();
+        });
+
+        if(Math.random() > 0.9 - (gnosisTime * 0.1)) {
+            ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + gnosisTime * 0.05})`;
+            ctx.fillRect(0,0,W,H);
+        }
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0,0,W,H);
+    } 
+    
+    particles.forEach(p => {
+        const alpha = p.life / p.maxLife;
+        ctx.fillStyle = p.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI*2);
+        ctx.fill();
+    });
+
+    ctx.fillStyle = gnosisMode ? '#FF0033' : '#00F3FF';
+    ctx.shadowBlur = 30; 
+    ctx.shadowColor = gnosisMode ? '#FF0033' : '#00F3FF';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 12, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.strokeStyle = gnosisMode ? '#FF0033' : '#00F3FF';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 16 + Math.sin(Date.now() * 0.005) * 4, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+}
+
+function loop(time) {
+    let dt = (time - lastTime) / 1000;
+    lastTime = time;
+    if(dt > 0.1) dt = 0.1;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+}
+
+let lastTime = 0;
+init();
+
+</script>
+</body>
+</html>
